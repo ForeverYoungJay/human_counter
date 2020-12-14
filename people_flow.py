@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+#coding=gbk
 """
 @version: 1.0
 @author: liaoliwei
@@ -10,6 +10,8 @@
 
 
 import colorsys
+import time
+import sqlite3
 from timeit import default_timer as timer
 
 import numpy as np
@@ -17,14 +19,13 @@ from keras import backend as K
 from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw
-
-from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
-from yolo3.utils import letterbox_image
+from .yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
+from .yolo3.utils import letterbox_image
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from keras.utils import multi_gpu_model
 gpu_num=1
-
+a=1
 class YOLO(object):
     def __init__(self):
         self.model_path = 'model_data/yolo.h5' # model path or trained weights path
@@ -128,14 +129,23 @@ class YOLO(object):
         out_boxes = np.array(lbox)
         out_scores = np.array(lscore)
         out_classes = np.array(lclass)
-        print('鐢婚潰涓湁{}涓汉'.format(len(out_boxes)))
+        print('画面中有{}个人'.format(len(out_boxes)))
+        meeting_time = time.time()
+        situation = 0
+        tup = (meeting_time, len(out_boxes), situation)
+        conn = sqlite3.connect("meetingroom.db")
+        c = conn.cursor()
+        c.execute("insert into meetingroom VALUES(?,?,?)", tup)
+        conn.commit()
+        c.close()
+        conn.close()
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
 
         font_cn = ImageFont.truetype(font='font/asl.otf',
-                                  size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+                    size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         for i, c in reversed(list(enumerate(out_classes))):
             predicted_class = self.class_names[c]
             box = out_boxes[i]
@@ -166,7 +176,17 @@ class YOLO(object):
                 [tuple(text_origin), tuple(text_origin + label_size)],
                 fill=self.colors[c])
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-            show_str = '  鐢婚潰涓湁'+str(len(out_boxes))+'涓汉  '
+            show_str = '  画面中有'+str(len(out_boxes))+'个人  '
+            meeting_time = time.time()
+            situation = 1
+            # 填入数据库
+            tup = (meeting_time, len(out_boxes), situation)
+            conn = sqlite3.connect("meetingroom.db")
+            c = conn.cursor()
+            c.execute("insert into meetingroom VALUES(?,?,?)", tup)
+            conn.commit()
+            c.close()
+            conn.close()
             label_size1 = draw.textsize(show_str, font_cn)
             print(label_size1)
             draw.rectangle(
@@ -186,6 +206,7 @@ class YOLO(object):
 
 def detect_video(yolo, video_path, output_path=""):
     import cv2
+    video_path = 0
     vid = cv2.VideoCapture(video_path)
     if not vid.isOpened():
         raise IOError("Couldn't open webcam or video")
