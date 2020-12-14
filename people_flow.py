@@ -19,8 +19,8 @@ from keras import backend as K
 from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw
-from .yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
-from .yolo3.utils import letterbox_image
+from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
+from yolo3.utils import letterbox_image
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from keras.utils import multi_gpu_model
@@ -93,9 +93,16 @@ class YOLO(object):
                 score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
+    def get_state(self):
+        start_time = 0
+        end_time =2
+        ord_time = (start_time,end_time)
+        ord_people = 12
+        return ord_time, ord_people
+
     def detect_image(self, image):
         start = timer()
-
+        (start_time,end_time),people = self.get_state()
         if self.model_image_size != (None, None):
             assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
             assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
@@ -130,7 +137,10 @@ class YOLO(object):
         out_classes = np.array(lclass)
         print('画面中有{}个人'.format(len(out_boxes)))
         meeting_time = time.time()
-        situation = 0
+        if start_time < meeting_time < end_time:
+            situation = "预订了没人"
+        else:
+            situation = "没预定没人"
         tup = (meeting_time, len(out_boxes), situation)
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
@@ -177,7 +187,10 @@ class YOLO(object):
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
             show_str = '  画面中有'+str(len(out_boxes))+'个人  '
             meeting_time = time.time()
-            situation = 1
+            if start_time < meeting_time < end_time:
+                situation = "预订了有"+str(len(out_boxes))+"个人"
+            else:
+                situation = "没预定有"+str(len(out_boxes))+"个人"
             # 填入数据库
             tup = (meeting_time, len(out_boxes), situation)
             conn = sqlite3.connect("meetingroom.db")
