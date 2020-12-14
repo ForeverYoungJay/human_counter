@@ -97,12 +97,13 @@ class YOLO(object):
         start_time = 0
         end_time =2
         ord_time = (start_time,end_time)
-        ord_people = 12
-        return ord_time, ord_people
+        ord_people = "kay"
+        ord_number = 3
+        return ord_time, ord_people ,ord_number
 
     def detect_image(self, image):
         start = timer()
-        (start_time,end_time),people = self.get_state()
+        (start_time,end_time),people,number= self.get_state()
         if self.model_image_size != (None, None):
             assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
             assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
@@ -138,13 +139,14 @@ class YOLO(object):
         print('画面中有{}个人'.format(len(out_boxes)))
         meeting_time = time.time()
         if start_time < meeting_time < end_time:
-            situation = "预订了没人"
+            situation = str(people)+"预订了没人"
         else:
             situation = "没预定没人"
-        tup = (meeting_time, len(out_boxes), situation)
+        print(situation)
+        tup = (people, situation)
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
-        c.execute("insert into meetingroom VALUES(?,?,?)", tup)
+        c.execute("insert into meetingroom VALUES(?,?)", tup)
         conn.commit()
         c.close()
         conn.close()
@@ -188,14 +190,15 @@ class YOLO(object):
             show_str = '  画面中有'+str(len(out_boxes))+'个人  '
             meeting_time = time.time()
             if start_time < meeting_time < end_time:
-                situation = "预订了有"+str(len(out_boxes))+"个人"
+                situation = str(people)+"预订了"+str(number)+"人有"+str(len(out_boxes))+"个人"
             else:
-                situation = "没预定有"+str(len(out_boxes))+"个人"
+                situation = "没预定,有"+str(len(out_boxes))+"个人"
             # 填入数据库
-            tup = (meeting_time, len(out_boxes), situation)
+            print(situation)
+            tup = (people, situation)
             conn = sqlite3.connect("meetingroom.db")
             c = conn.cursor()
-            c.execute("insert into meetingroom VALUES(?,?,?)", tup)
+            c.execute("insert into meetingroom VALUES(?,?)", tup)
             conn.commit()
             c.close()
             conn.close()
@@ -218,7 +221,6 @@ class YOLO(object):
 
 def detect_video(yolo, video_path, output_path=""):
     import cv2
-    video_path = 0
     vid = cv2.VideoCapture(video_path)
     if not vid.isOpened():
         raise IOError("Couldn't open webcam or video")

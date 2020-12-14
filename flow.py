@@ -13,4 +13,4 @@ if __name__ == '__main__':
         output_path = sys.argv[2]
         detect_video(YOLO(), video_path, output_path)
     else:"""
-detect_video(YOLO(), 1)
+detect_video(YOLO(), 0)
