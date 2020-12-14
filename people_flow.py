@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+#coding=gbk
 """
 @version: 1.0
 @author: liaoliwei
@@ -24,6 +24,7 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from keras.utils import multi_gpu_model
 gpu_num=1
+
 
 class YOLO(object):
     def __init__(self):
@@ -93,16 +94,23 @@ class YOLO(object):
                 score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
+    def get_state(self):
+        start_time = 0
+        end_time =1
+        ord_time = (start_time,end_time)
+        ord_people = 12
+        return ord_time, ord_people
+
     def detect_image(self, image):
         start = timer()
-
+        (start_time,end_time),people = self.get_state()
         if self.model_image_size != (None, None):
             assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
             assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
             boxed_image = letterbox_image(image, tuple(reversed(self.model_image_size)))
         else:
-            new_image_size = (image.width - (image.width % 32),
-                              image.height - (image.height % 32))
+            new_image_size = (image.width - (image.width % 32),image.height - (image.height % 32))
+            #new_image_size = (image.width , image.height )
             boxed_image = letterbox_image(image, new_image_size)
         image_data = np.array(boxed_image, dtype='float32')
 
@@ -128,14 +136,14 @@ class YOLO(object):
         out_boxes = np.array(lbox)
         out_scores = np.array(lscore)
         out_classes = np.array(lclass)
-        print('鐢婚潰涓湁{}涓汉'.format(len(out_boxes)))
+        print('画面中有{}个人'.format(len(out_boxes)))
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
 
         font_cn = ImageFont.truetype(font='font/asl.otf',
-                                  size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+                    size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         for i, c in reversed(list(enumerate(out_classes))):
             predicted_class = self.class_names[c]
             box = out_boxes[i]
@@ -166,7 +174,7 @@ class YOLO(object):
                 [tuple(text_origin), tuple(text_origin + label_size)],
                 fill=self.colors[c])
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-            show_str = '  鐢婚潰涓湁'+str(len(out_boxes))+'涓汉  '
+            show_str = '  画面中有'+str(len(out_boxes))+'个人  '
             label_size1 = draw.textsize(show_str, font_cn)
             print(label_size1)
             draw.rectangle(
@@ -184,8 +192,10 @@ class YOLO(object):
         self.sess.close()
 
 
+
 def detect_video(yolo, video_path, output_path=""):
     import cv2
+    video_path = 0
     vid = cv2.VideoCapture(video_path)
     if not vid.isOpened():
         raise IOError("Couldn't open webcam or video")
