@@ -25,7 +25,6 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from keras.utils import multi_gpu_model
 gpu_num=1
-a=1
 class YOLO(object):
     def __init__(self):
         self.model_path = 'model_data/yolo.h5' # model path or trained weights path
