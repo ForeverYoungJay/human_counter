@@ -94,8 +94,8 @@ class YOLO(object):
         return boxes, scores, classes
 
     def get_state(self):
-        start_time = 0
-        end_time =2
+        start_time = 1608174000
+        end_time =1608177600
         ord_time = (start_time,end_time)
         ord_people = "kay"
         ord_number = 3
