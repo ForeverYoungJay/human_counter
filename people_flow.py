@@ -94,11 +94,22 @@ class YOLO(object):
         return boxes, scores, classes
 
     def get_state(self):
-        start_time = 1608174000
-        end_time =1608177600
+        mlist = [(1608521400,1608525000,"海茵",4),(1608528600,1608532200,"海茵",5),(1608620400,1608624000,"海茵",6),
+                 (1608690600,1608694200,"海茵",8),(1608796800,1608800400,"海茵",6)]
+        start_time = 0
+        end_time =0
         ord_time = (start_time,end_time)
-        ord_people = "kay"
-        ord_number = 3
+        ord_people = ""
+        ord_number = 0
+        for i in range(len(mlist)):
+            if mlist[i][0]<time.time()<mlist[i][1]:
+                start_time = mlist[i][0]
+                end_time = mlist[i][1]
+                ord_time = (start_time, end_time)
+                ord_people=mlist[i][2]
+                ord_number=mlist[i][3]
+            else:
+                continue
         return ord_time, ord_people ,ord_number
 
     def detect_image(self, image):
