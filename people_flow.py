@@ -108,8 +108,6 @@ class YOLO(object):
                 ord_time = (start_time, end_time)
                 ord_people=mlist[i][2]
                 ord_number=mlist[i][3]
-            else:
-                continue
         return ord_time, ord_people ,ord_number
 
     def detect_image(self, image):
