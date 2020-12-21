@@ -108,6 +108,7 @@ class YOLO(object):
                 ord_time = (start_time, end_time)
                 ord_people=mlist[i][2]
                 ord_number=mlist[i][3]
+
         return ord_time, ord_people ,ord_number
 
     def detect_image(self, image):
@@ -152,10 +153,10 @@ class YOLO(object):
         else:
             situation = "没预定没人"
         print(situation)
-        tup = (people, situation)
+        tup = (people, start_time,end_time,meeting_time,situation)
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
-        c.execute("insert into meetingroom VALUES(?,?)", tup)
+        c.execute("insert into meetingroom VALUES(?,?,?,?,?)", tup)
         conn.commit()
         c.close()
         conn.close()
@@ -204,10 +205,10 @@ class YOLO(object):
                 situation = "没预定,有"+str(len(out_boxes))+"个人"
             # 填入数据库
             print(situation)
-            tup = (people, situation)
+            tup = (people, start_time, end_time, meeting_time, situation)
             conn = sqlite3.connect("meetingroom.db")
             c = conn.cursor()
-            c.execute("insert into meetingroom VALUES(?,?)", tup)
+            c.execute("insert into meetingroom VALUES(?,?,?,?,?)", tup)
             conn.commit()
             c.close()
             conn.close()
