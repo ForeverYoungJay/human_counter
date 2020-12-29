@@ -13,6 +13,7 @@ import colorsys
 import time
 import sqlite3
 from timeit import default_timer as timer
+import requests
 
 import numpy as np
 from keras import backend as K
@@ -285,6 +286,58 @@ def detect_img(yolo):
             r_image.show()
     yolo.close_session()
 
+def upload_meetingroom():
+    conn = sqlite3.connect("meetingroom.db")
+    c = conn.cursor()
+    c.execute("SELECT * from meetingroom")
+    cursor = c.fetchall()
+    data = []
+
+    for row in cursor:
+        face = {}
+        face["face_id"] = str(row[0])
+        face["face_time"] = int(row[1])
+        face["name"] = str(row[2])
+        data.append(face)
+
+    data = json.dumps(data)
+    url = "http://sur.itmars.net/index/upload_name_and_time"
+
+    payload = {'data': data}
+    files = [
+
+    ]
+    headers = {}
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    res = response.json()
+    print(res)
+    # print(response.text.encode('utf8'))
+    if res["code"] == 1:
+        c.execute("delete from database")
+        conn.commit()
+        c.close()
+        conn.close()
+
+    url = "http://sur.itmars.net/api/v1/identify"
+
+    payload = {'name': 'alan',
+               'employee_id': '2',
+               'action': 'CheckIn',
+               'location_id': '1',
+               'location': 'Meeting Room 1',
+               'serial': 'serial001'}
+    files = [
+
+    ]
+    headers = {
+        'Accept': 'application/json',
+        'Cookie': 'token=wQ5s87yi8ZybRTsUmZrWIFeq6VAH8JucSze2mj9k'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+
+    print(response.text)
 
 
 if __name__ == '__main__':
