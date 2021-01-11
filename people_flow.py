@@ -231,6 +231,7 @@ class YOLO(object):
         self.sess.close()
 
 
+
 def detect_video(yolo, video_path, output_path=""):
     import cv2
     vid = cv2.VideoCapture(video_path)
@@ -295,50 +296,19 @@ def upload_meetingroom():
     data = []
 
     for row in cursor:
-        face = {}
-        face["face_id"] = str(row[0])
-        face["face_time"] = int(row[1])
-        face["name"] = str(row[2])
-        data.append(face)
+        data.append(json.dumps())
 
-    data = json.dumps(data)
-    url = "http://sur.itmars.net/index/upload_name_and_time"
-
-    payload = {'data': data}
-    files = [
-
-    ]
-    headers = {}
-
-    response = requests.request("POST", url, headers=headers, data=payload, files=files)
-    res = response.json()
-    print(res)
-    # print(response.text.encode('utf8'))
-    if res["code"] == 1:
-        c.execute("delete from database")
-        conn.commit()
-        c.close()
-        conn.close()
-
-    url = "http://sur.itmars.net/api/v1/identify"
-
-    payload = {'name': 'alan',
-               'employee_id': '2',
-               'action': 'CheckIn',
-               'location_id': '1',
-               'location': 'Meeting Room 1',
-               'serial': 'serial001'}
-    files = [
-
-    ]
-    headers = {
-        'Accept': 'application/json',
-        'Cookie': 'token=wQ5s87yi8ZybRTsUmZrWIFeq6VAH8JucSze2mj9k'
-    }
-
-    response = requests.request("POST", url, headers=headers, data=payload, files=files)
-
-    print(response.text)
+    try:
+        if json.loads(response.text)["status"] == True:
+            print("会议室数据上传中")
+            conn = sqlite3.connect("meetingroom.db")
+            c = conn.cursor()
+            c.execute("delete from meetingroom")
+            conn.commit()
+            c.close()
+            conn.close()
+    except KeyError:
+        print("没会议室数据")
 
 
 if __name__ == '__main__':
