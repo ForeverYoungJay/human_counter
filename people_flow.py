@@ -15,6 +15,8 @@ import sqlite3
 from timeit import default_timer as timer
 import requests
 import json
+import asyncio
+import websocket
 
 import numpy as np
 from keras import backend as K
@@ -149,19 +151,24 @@ class YOLO(object):
         out_scores = np.array(lscore)
         out_classes = np.array(lclass)
         print('画面中有{}个人'.format(len(out_boxes)))
-        meeting_time = time.time()
-        if start_time < meeting_time < end_time:
+        end_time = time.time()
+        if start_time < end_time < end_time:
             situation = str(people)+"预订了没人"
         else:
             situation = "没预定没人"
-        print(situation)
-        tup = (people, start_time,end_time,meeting_time,situation)
+        #tup = (people, start_time,end_time,meeting_time,situation)
+        tup = (len(out_boxes),end_time)
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
-        c.execute("insert into meetingroom VALUES(?,?,?,?,?)", tup)
+        c.execute("insert into meetingroom VALUES(?,?)", tup)
         conn.commit()
         c.close()
         conn.close()
+        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+        ws.send(json.dumps(
+            {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": end_time}))
+        ws.close()
+        upload_meetingroom()
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
@@ -206,14 +213,19 @@ class YOLO(object):
             else:
                 situation = "没预定,有"+str(len(out_boxes))+"个人"
             # 填入数据库
-            print(situation)
-            tup = (people, start_time, end_time, meeting_time, situation)
+            start_time = time.time()
+            #tup = (people, start_time, end_time, meeting_time, situation)
+            tup = (len(out_boxes),start_time)
             conn = sqlite3.connect("meetingroom.db")
             c = conn.cursor()
-            c.execute("insert into meetingroom VALUES(?,?,?,?,?)", tup)
+            c.execute("insert into meetingroom VALUES(?,?)", tup)
             conn.commit()
             c.close()
             conn.close()
+            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+            ws.send(json.dumps(
+                {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": start_time}))
+            ws.close()
             label_size1 = draw.textsize(show_str, font_cn)
             print(label_size1)
             draw.rectangle(
@@ -293,22 +305,24 @@ def upload_meetingroom():
     c = conn.cursor()
     c.execute("SELECT * from meetingroom")
     cursor = c.fetchall()
-    data = []
-
+    number = []
+    times = []
     for row in cursor:
-        data.append(json.dumps())
+        number.append(row[0])
+        times.append(row[1])
+    avg = np.mean(number)
+    data = json.dumps({"route":"/meetingroom/period","avg_person":avg,"start_time":times[0],"end_time":times[-1]})
+    ws = websocket.create_connection()
+    ws.send(data)
+    if json.loads(ws.recv())["status"]==True:
+        ws.close()
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        c.execute("delete from database")
+        conn.commit()
+        c.close()
+        conn.close()
 
-    try:
-        if json.loads(response.text)["status"] == True:
-            print("会议室数据上传中")
-            conn = sqlite3.connect("meetingroom.db")
-            c = conn.cursor()
-            c.execute("delete from meetingroom")
-            conn.commit()
-            c.close()
-            conn.close()
-    except KeyError:
-        print("没会议室数据")
 
 
 if __name__ == '__main__':
