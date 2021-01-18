@@ -157,7 +157,7 @@ class YOLO(object):
         else:
             situation = "没预定没人"
         #tup = (people, start_time,end_time,meeting_time,situation)
-        tup = (len(out_boxes),end_time)
+        tup = (0,end_time)
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
         c.execute("insert into meetingroom VALUES(?,?)", tup)
@@ -312,7 +312,7 @@ def upload_meetingroom():
         times.append(row[1])
     avg = np.mean(number)
     data = json.dumps({"route":"/meetingroom/period","avg_person":avg,"start_time":times[0],"end_time":times[-1]})
-    ws = websocket.create_connection()
+    ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
     ws.send(data)
     if json.loads(ws.recv())["status"]==True:
         ws.close()
