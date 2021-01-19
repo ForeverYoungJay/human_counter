@@ -190,7 +190,7 @@ class YOLO(object):
             left = max(0, np.floor(left + 0.5).astype('int32'))
             bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-            print(label, (left, top), (right, bottom))
+            #print(label, (left, top), (right, bottom))
 
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
@@ -226,7 +226,7 @@ class YOLO(object):
             ws.send(json.dumps(
                 {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": start_time}))
             label_size1 = draw.textsize(show_str, font_cn)
-            print(label_size1)
+            #print(label_size1)
             draw.rectangle(
                 [10, 10, 10 + label_size1[0], 10 + label_size1[1]],
                 fill=(255,255,0))
@@ -235,7 +235,7 @@ class YOLO(object):
             del draw
 
         end = timer()
-        print(end - start)
+        #print(end - start)
         return image
 
     def close_session(self):
@@ -277,8 +277,8 @@ def detect_video(yolo, video_path, output_path=""):
             curr_fps = 0
         cv2.putText(result, text=fps, org=(3, 15), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                     fontScale=0.50, color=(255, 0, 0), thickness=2)
-        cv2.namedWindow("result", cv2.WINDOW_NORMAL)
-        cv2.imshow("result", result)
+        #cv2.namedWindow("result", cv2.WINDOW_NORMAL)
+        #cv2.imshow("result", result)
         if isOutput:
             out.write(result)
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -311,7 +311,7 @@ def upload_meetingroom():
             number.append(row[0])
             times.append(row[1])
     avg = np.mean(number)
-    print(avg)
+    #print(avg)
     data = json.dumps({"route":"/meetingroom/period","avg_person":avg,"start_time":times[0],"end_time":times[-1]})
     ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
     ws.send(data)
