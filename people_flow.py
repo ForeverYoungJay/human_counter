@@ -167,8 +167,8 @@ class YOLO(object):
         ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
         ws.send(json.dumps(
             {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": end_time}))
-        ws.close()
-        upload_meetingroom()
+        if len(out_boxes)==0:
+            upload_meetingroom()
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
@@ -215,7 +215,7 @@ class YOLO(object):
             # 填入数据库
             start_time = time.time()
             #tup = (people, start_time, end_time, meeting_time, situation)
-            tup = (len(out_boxes),start_time)
+            tup = (int(len(out_boxes)),start_time)
             conn = sqlite3.connect("meetingroom.db")
             c = conn.cursor()
             c.execute("insert into meetingroom VALUES(?,?)", tup)
@@ -225,7 +225,6 @@ class YOLO(object):
             ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
             ws.send(json.dumps(
                 {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": start_time}))
-            ws.close()
             label_size1 = draw.textsize(show_str, font_cn)
             print(label_size1)
             draw.rectangle(
@@ -308,20 +307,21 @@ def upload_meetingroom():
     number = []
     times = []
     for row in cursor:
-        number.append(row[0])
-        times.append(row[1])
+        if type(row[0])==int:
+            number.append(row[0])
+            times.append(row[1])
     avg = np.mean(number)
+    print(avg)
     data = json.dumps({"route":"/meetingroom/period","avg_person":avg,"start_time":times[0],"end_time":times[-1]})
     ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
     ws.send(data)
-    if json.loads(ws.recv())["status"]==True:
-        ws.close()
-        conn = sqlite3.connect("database.db")
-        c = conn.cursor()
-        c.execute("delete from database")
-        conn.commit()
-        c.close()
-        conn.close()
+    conn = sqlite3.connect("meetingroom.db")
+    c = conn.cursor()
+    c.execute("delete from meetingroom")
+    conn.commit()
+    c.close()
+    conn.close()
+    print("平均值上传成功")
 
 
 
