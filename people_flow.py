@@ -17,7 +17,7 @@ import requests
 import json
 import asyncio
 import websocket
-
+from datetime import datetime
 import numpy as np
 from keras import backend as K
 from keras.models import load_model
@@ -116,8 +116,6 @@ class YOLO(object):
         return ord_time, ord_people ,ord_number
 
     def detect_image(self, image):
-        start = timer()
-        (start_time,end_time),people,number= self.get_state()
         if self.model_image_size != (None, None):
             assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
             assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
@@ -128,7 +126,7 @@ class YOLO(object):
             boxed_image = letterbox_image(image, new_image_size)
         image_data = np.array(boxed_image, dtype='float32')
 
-        print(image_data.shape)
+        #print(image_data.shape)
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
 
@@ -151,26 +149,22 @@ class YOLO(object):
         out_scores = np.array(lscore)
         out_classes = np.array(lclass)
         print('画面中有{}个人'.format(len(out_boxes)))
-        end_time = time.time()
-        if start_time < end_time < end_time:
-            situation = str(people)+"预订了没人"
-        else:
-            situation = "没预定没人"
+        meetingtime = time.time()
         #tup = (people, start_time,end_time,meeting_time,situation)
-        tup = (0,end_time)
+        uploadnow(out_boxes,meetingtime)
+        tup = (len(out_boxes), meetingtime)
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
         c.execute("insert into meetingroom VALUES(?,?)", tup)
         conn.commit()
         c.close()
         conn.close()
-        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
-        ws.send(json.dumps(
-            {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": end_time}))
-        if len(out_boxes)==0:
-            upload_meetingroom()
+        if len(out_boxes) == 0:
+            avg()
 
-        font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
+
+
+        """font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
 
@@ -206,25 +200,10 @@ class YOLO(object):
                 [tuple(text_origin), tuple(text_origin + label_size)],
                 fill=self.colors[c])
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-            show_str = '  画面中有'+str(len(out_boxes))+'个人  '
-            meeting_time = time.time()
-            if start_time < meeting_time < end_time:
-                situation = str(people)+"预订了"+str(number)+"人有"+str(len(out_boxes))+"个人"
-            else:
-                situation = "没预定,有"+str(len(out_boxes))+"个人"
+            show_str = ' 2画面中有'+str(len(out_boxes))+'个人  '
             # 填入数据库
-            start_time = time.time()
-            #tup = (people, start_time, end_time, meeting_time, situation)
-            tup = (int(len(out_boxes)),start_time)
-            conn = sqlite3.connect("meetingroom.db")
-            c = conn.cursor()
-            c.execute("insert into meetingroom VALUES(?,?)", tup)
-            conn.commit()
-            c.close()
-            conn.close()
-            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
-            ws.send(json.dumps(
-                {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": start_time}))
+            
+
             label_size1 = draw.textsize(show_str, font_cn)
             #print(label_size1)
             draw.rectangle(
@@ -234,7 +213,7 @@ class YOLO(object):
 
             del draw
 
-        end = timer()
+        end = timer()"""
         #print(end - start)
         return image
 
@@ -304,24 +283,62 @@ def upload_meetingroom():
     c = conn.cursor()
     c.execute("SELECT * from meetingroom")
     cursor = c.fetchall()
-    number = []
-    times = []
     for row in cursor:
         if type(row[0])==int:
-            number.append(row[0])
-            times.append(row[1])
-    avg = np.mean(number)
-    #print(avg)
-    data = json.dumps({"route":"/meetingroom/period","avg_person":avg,"start_time":times[0],"end_time":times[-1]})
-    ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
-    ws.send(data)
-    conn = sqlite3.connect("meetingroom.db")
-    c = conn.cursor()
-    c.execute("delete from meetingroom")
+            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+            ws.send(json.dumps(
+                {"route": "/meetingroom/identifies", "person_num": row[0], "identify_time": row[1]}))
     conn.commit()
     c.close()
     conn.close()
-    print("平均值上传成功")
+
+
+
+def uploadnow(out_boxes,nowtime):
+    try:
+        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+        ws.send(json.dumps(
+            {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": nowtime}))
+        print("实时数据上传")
+    except OSError or ConnectionRefusedError:
+        tup = (int(len(out_boxes)), nowtime)
+        conn = sqlite3.connect("meetingroom.db")
+        c = conn.cursor()
+        c.execute("insert into meetingroom VALUES(?,?)", tup)
+        conn.commit()
+        c.close()
+        conn.close()
+        print("网络错误,存入数据库")
+
+def avg():
+    conn = sqlite3.connect("meetingroom.db")
+    c = conn.cursor()
+    c.execute("SELECT * from meetingroom")
+    cursor = c.fetchall()
+    number = []
+    times = []
+    for row in cursor:
+        if type(row[0]) == int:
+            number.append(row[0])
+            times.append(row[1])
+    avg = np.mean(number)
+    if avg!=0:
+    # print(avg)
+        data = json.dumps(
+            {"route": "/meetingroom/period", "avg_person": avg, "start_time": times[0], "end_time": times[-1]})
+        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+        ws.send(data)
+        conn = sqlite3.connect("meetingroom.db")
+        c = conn.cursor()
+        c.execute("delete from meetingroom")
+        conn.commit()
+        c.close()
+        conn.close()
+        print("平均值上传成功")
+
+
+
+
 
 
 
