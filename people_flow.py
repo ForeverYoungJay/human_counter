@@ -148,7 +148,7 @@ class YOLO(object):
         out_boxes = np.array(lbox)
         out_scores = np.array(lscore)
         out_classes = np.array(lclass)
-        #print('画面中有{}个人'.format(len(out_boxes)))
+        print('画面中有{}个人'.format(len(out_boxes)))
         meetingtime = time.time()
         #tup = (people, start_time,end_time,meeting_time,situation)
         uploadnow(out_boxes,meetingtime)
@@ -285,7 +285,7 @@ def upload_meetingroom():
     cursor = c.fetchall()
     for row in cursor:
         if type(row[0])==int:
-            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
             ws.send(json.dumps(
                 {"route": "/meetingroom/identifies", "person_num": row[0], "identify_time": row[1]}))
     conn.commit()
@@ -296,10 +296,12 @@ def upload_meetingroom():
 
 def uploadnow(out_boxes,nowtime):
     try:
-        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
         ws.send(json.dumps(
             {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": nowtime}))
-        #print("实时数据上传")
+        result = ws.recv()
+        if json.loads(result)["status"]== True:
+            print("实时数据上传")
     except OSError or ConnectionRefusedError:
         tup = (int(len(out_boxes)), nowtime)
         conn = sqlite3.connect("meetingroom.db")
@@ -326,15 +328,18 @@ def avg():
     # print(avg)
         data = json.dumps(
             {"route": "/meetingroom/period", "avg_person": avg, "start_time": times[0], "end_time": times[-1]})
-        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
+        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
         ws.send(data)
+        result = ws.recv()
+        if json.loads(result)["status"] == True:
+            print("平均值上传成功")
         conn = sqlite3.connect("meetingroom.db")
         c = conn.cursor()
         c.execute("delete from meetingroom")
         conn.commit()
         c.close()
         conn.close()
-        print("平均值上传成功")
+
 
 
 
