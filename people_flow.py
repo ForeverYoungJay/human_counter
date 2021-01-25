@@ -148,7 +148,7 @@ class YOLO(object):
         out_boxes = np.array(lbox)
         out_scores = np.array(lscore)
         out_classes = np.array(lclass)
-        print('画面中有{}个人'.format(len(out_boxes)))
+        #print('画面中有{}个人'.format(len(out_boxes)))
         meetingtime = time.time()
         #tup = (people, start_time,end_time,meeting_time,situation)
         uploadnow(out_boxes,meetingtime)
@@ -299,7 +299,7 @@ def uploadnow(out_boxes,nowtime):
         ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000002d91c896")
         ws.send(json.dumps(
             {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": nowtime}))
-        print("实时数据上传")
+        #print("实时数据上传")
     except OSError or ConnectionRefusedError:
         tup = (int(len(out_boxes)), nowtime)
         conn = sqlite3.connect("meetingroom.db")

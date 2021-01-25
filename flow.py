@@ -7,10 +7,27 @@ import sys
 from people_flow import YOLO
 from people_flow import detect_video
 
+
 if __name__ == '__main__':
     """video_path = sys.argv[1]
     if len(sys.argv) > 2:
         output_path = sys.argv[2]
         detect_video(YOLO(), video_path, output_path)
     else:"""
-detect_video(YOLO(), 0)
+    import requests
+
+    url = "http://sur.itmars.net/api/v1/device/connect"
+
+    payload={'serial': '100000001c273adb'}
+    files=[
+
+    ]
+    headers = {
+      'Accept': 'application/json'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+
+    print(response.text)
+
+    detect_video(YOLO(), 0)
