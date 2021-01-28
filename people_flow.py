@@ -325,24 +325,30 @@ def avg():
             number.append(row[0])
             times.append(row[1])
     avg = np.mean(number)
-    # if avg!=0:
+    if avg!=0:
     # print(avg)
-    try:
+        try:
+            data = json.dumps(
+                {"route": "/meetingroom/period", "avg_person": avg, "start_time": times[0], "end_time": times[-1]})
+            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
+            ws.send(data)
+            result = ws.recv()
+            if json.loads(result)["status"] == True:
+                print("平均值上传成功")
+            conn = sqlite3.connect("meetingroom.db")
+            c = conn.cursor()
+            c.execute("delete from meetingroom")
+            conn.commit()
+            c.close()
+            conn.close()
+        except IndexError:
+            pass
+    else:
         data = json.dumps(
-            {"route": "/meetingroom/period", "avg_person": avg, "start_time": times[0], "end_time": times[-1]})
+            {"route": "/meetingroom/period", "avg_person": 0, "start_time": time.time(), "end_time": time.time()})
         ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
         ws.send(data)
-        result = ws.recv()
-        if json.loads(result)["status"] == True:
-            print("平均值上传成功")
-        conn = sqlite3.connect("meetingroom.db")
-        c = conn.cursor()
-        c.execute("delete from meetingroom")
-        conn.commit()
-        c.close()
-        conn.close()
-    except IndexError:
-        pass
+        print("平均值为0")
 
 
 
