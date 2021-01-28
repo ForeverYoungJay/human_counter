@@ -343,12 +343,7 @@ def avg():
             conn.close()
         except IndexError:
             pass
-    else:
-        data = json.dumps(
-            {"route": "/meetingroom/period", "avg_person": 0, "start_time": time.time(), "end_time": time.time()})
-        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
-        ws.send(data)
-        print("平均值为0")
+
 
 
 
