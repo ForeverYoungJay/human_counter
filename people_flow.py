@@ -302,6 +302,7 @@ def uploadnow(out_boxes,nowtime):
         result = ws.recv()
         if json.loads(result)["status"]== True:
             print("实时数据上传")
+
     except OSError or ConnectionRefusedError:
         tup = (int(len(out_boxes)), nowtime)
         conn = sqlite3.connect("meetingroom.db")
@@ -324,24 +325,24 @@ def avg():
             number.append(row[0])
             times.append(row[1])
     avg = np.mean(number)
-    if avg!=0:
+    # if avg!=0:
     # print(avg)
-        try:
-            data = json.dumps(
-                {"route": "/meetingroom/period", "avg_person": avg, "start_time": times[0], "end_time": times[-1]})
-            ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
-            ws.send(data)
-            result = ws.recv()
-            if json.loads(result)["status"] == True:
-                print("平均值上传成功")
-            conn = sqlite3.connect("meetingroom.db")
-            c = conn.cursor()
-            c.execute("delete from meetingroom")
-            conn.commit()
-            c.close()
-            conn.close()
-        except IndexError:
-            pass
+    try:
+        data = json.dumps(
+            {"route": "/meetingroom/period", "avg_person": avg, "start_time": times[0], "end_time": times[-1]})
+        ws = websocket.create_connection("ws://47.89.240.122:2346?serial=100000001c273adb")
+        ws.send(data)
+        result = ws.recv()
+        if json.loads(result)["status"] == True:
+            print("平均值上传成功")
+        conn = sqlite3.connect("meetingroom.db")
+        c = conn.cursor()
+        c.execute("delete from meetingroom")
+        conn.commit()
+        c.close()
+        conn.close()
+    except IndexError:
+        pass
 
 
 
