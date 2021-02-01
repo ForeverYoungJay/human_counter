@@ -300,8 +300,12 @@ def uploadnow(out_boxes,nowtime):
         ws.send(json.dumps(
             {"route": "/meetingroom/identifies", "person_num": len(out_boxes), "identify_time": nowtime}))
         result = ws.recv()
-        if json.loads(result)["status"]== True:
-            print("实时数据上传")
+        try:
+            if json.loads(result)["status"]== True:
+                print("实时数据上传")
+        except KeyError:
+            pass
+
 
     except OSError or ConnectionRefusedError:
         tup = (int(len(out_boxes)), nowtime)
