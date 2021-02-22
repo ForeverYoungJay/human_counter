@@ -31,9 +31,9 @@ from keras.utils import multi_gpu_model
 gpu_num=1
 class YOLO(object):
     def __init__(self):
-        self.model_path = 'model_data/yolo.h5' # model path or trained weights path
-        self.anchors_path = 'model_data/yolo_anchors.txt'
-        self.classes_path = 'model_data/coco_classes.txt'
+        self.model_path = '/home/pi/Desktop/human_counter/model_data/yolo.h5' # model path or trained weights path
+        self.anchors_path = '/home/pi/Desktop/human_counter/model_data/yolo_anchors.txt'
+        self.classes_path = '/home/pi/Desktop/human_counter/model_data/coco_classes.txt'
         self.score = 0.3
         self.iou = 0.45
         self.class_names = self._get_class()
@@ -153,7 +153,7 @@ class YOLO(object):
         #tup = (people, start_time,end_time,meeting_time,situation)
         uploadnow(out_boxes,meetingtime)
         tup = (len(out_boxes), meetingtime)
-        conn = sqlite3.connect("meetingroom.db")
+        conn = sqlite3.connect("/home/pi/Desktop/human_counter/meetingroom.db")
         c = conn.cursor()
         c.execute("insert into meetingroom VALUES(?,?)", tup)
         conn.commit()
@@ -279,7 +279,7 @@ def detect_img(yolo):
     yolo.close_session()
 
 def upload_meetingroom():
-    conn = sqlite3.connect("meetingroom.db")
+    conn = sqlite3.connect("/home/pi/Desktop/human_counter/meetingroom.db")
     c = conn.cursor()
     c.execute("SELECT * from meetingroom")
     cursor = c.fetchall()
@@ -309,7 +309,7 @@ def uploadnow(out_boxes,nowtime):
 
     except OSError or ConnectionRefusedError:
         tup = (int(len(out_boxes)), nowtime)
-        conn = sqlite3.connect("meetingroom.db")
+        conn = sqlite3.connect("/home/pi/Desktop/human_counter/meetingroom.db")
         c = conn.cursor()
         c.execute("insert into meetingroom VALUES(?,?)", tup)
         conn.commit()
@@ -318,7 +318,7 @@ def uploadnow(out_boxes,nowtime):
         print("网络错误,存入数据库")
 
 def avg():
-    conn = sqlite3.connect("meetingroom.db")
+    conn = sqlite3.connect("/home/pi/Desktop/human_counter/meetingroom.db")
     c = conn.cursor()
     c.execute("SELECT * from meetingroom")
     cursor = c.fetchall()
@@ -339,7 +339,7 @@ def avg():
             result = ws.recv()
             if json.loads(result)["status"] == True:
                 print("平均值上传成功")
-            conn = sqlite3.connect("meetingroom.db")
+            conn = sqlite3.connect("/home/pi/Desktop/human_counter/meetingroom.db")
             c = conn.cursor()
             c.execute("delete from meetingroom")
             conn.commit()
